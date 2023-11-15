@@ -126,7 +126,6 @@ public class MainActivity extends Activity {
                 if(isChecked) {//选中
                     saveAndGetConfig();
                     startService();
-                    Log.i("andysong--server-->", "iscked");
                     MqttServerSwitch.setChecked(true);
                 }else {
                     stopService();
@@ -331,12 +330,10 @@ public class MainActivity extends Activity {
         props.setProperty(BrokerConstants.WEB_SOCKET_PORT_PROPERTY_NAME, String.valueOf(BrokerConstants.WEBSOCKET_PORT));
         props.setProperty(BrokerConstants.NEED_CLIENT_AUTH, String.valueOf(vAuth));
         if (vAuth) {
-            Log.i("andysong--->MAIN--->password:", "Setting password"+ passwordFile.getAbsolutePath());
             props.setProperty(BrokerConstants.ALLOW_ANONYMOUS_PROPERTY_NAME, "false");
             writeToPasswordFile(passwordFile);
             props.setProperty(BrokerConstants.PASSWORD_FILE_PROPERTY_NAME, passwordFile.getAbsolutePath());
         }else{
-            Log.i("andysong--->MAIN--->password:", "Setting ALLOW_ANONYMOUS_PROPERTY_NAME");
             props.setProperty(BrokerConstants.ALLOW_ANONYMOUS_PROPERTY_NAME, "true");
         }
 
@@ -370,7 +367,6 @@ public class MainActivity extends Activity {
     private void updateUI(Properties props) {
        // username.setText("");
        // password.setText("");
-
         port.setText(props.getProperty(BrokerConstants.PORT_PROPERTY_NAME));
         host.setText(props.getProperty(BrokerConstants.HOST_PROPERTY_NAME));
         props.setProperty(BrokerConstants.WEB_SOCKET_PORT_PROPERTY_NAME, String.valueOf(BrokerConstants.WEBSOCKET_PORT));
@@ -379,7 +375,6 @@ public class MainActivity extends Activity {
 //            authFields.setVisibility(View.VISIBLE);
         } else {
 //            noAuth.setChecked(true);
-
         }
     }
 
