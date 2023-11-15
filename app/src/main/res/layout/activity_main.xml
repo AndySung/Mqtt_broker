@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout android:layout_width="match_parent" android:layout_height="match_parent"
+    xmlns:android="http://schemas.android.com/apk/res/android" android:orientation="vertical">
+    <RelativeLayout   android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <Toolbar
+            android:id="@+id/toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
+            android:background="@color/bg_color"
+            android:fitsSystemWindows="true"
+            android:minHeight="?attr/actionBarSize"
+            android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar">
+            <!--自定义控件-->
+            <TextView
+                android:id="@+id/toolbar_title"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerInParent="true"
+                android:layout_gravity="center"
+                android:gravity="center"
+                android:textColor="@color/blue"
+                android:text="MQTT Broker"
+                android:textSize="20dp"/>
+        </Toolbar>
+    </RelativeLayout>
+    <ScrollView android:layout_marginTop="20dp" android:layout_width="match_parent" android:layout_height="match_parent">
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical">
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:orientation="horizontal">
+                <ImageView android:layout_height="50dp" android:layout_width="40dp" android:src="@mipmap/mqtt"
+                    android:padding="8dp"/>
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="MQTT Settings"
+                    android:textColor="@color/blue" android:layout_marginLeft="10dp" android:layout_gravity="center"/>
+            </LinearLayout>
+
+            <RelativeLayout android:id="@+id/enable_mqtt_server_relativeLayout" android:layout_width="match_parent" android:layout_height="wrap_content" >
+                <LinearLayout android:layout_height="wrap_content" android:layout_width="wrap_content" android:orientation="vertical"
+                    android:layout_marginLeft="50dp">
+                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Enable MQTT Server"
+                        android:textColor="@color/black" android:layout_gravity="center"
+                        android:textStyle="bold"/>
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:text="Restart required if changes in below \n settings needs to be reflected"
+                        android:textColor="@color/gray" />
+                </LinearLayout>
+                <Switch android:id="@+id/mqtt_server_switch" android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:layout_alignParentRight="true" android:layout_marginRight="10dp"
+                    android:gravity="center" android:layout_centerVertical="true"/>
+            </RelativeLayout>
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Host" android:textColor="@color/black" android:textStyle="bold" android:layout_marginLeft="50dp" android:layout_marginTop="20dp"/>
+            <TextView
+                android:id="@+id/text_input_host"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="5dp"
+                android:gravity="center_vertical"
+                android:text="192.168.1.xxx"
+                android:layout_marginLeft="50dp"
+                android:singleLine="true"
+                android:textSize="14sp"
+                android:textColor="@color/gray" />
+            <LinearLayout android:id="@+id/layout_port" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical">
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Port"
+                    android:textColor="@color/black" android:textStyle="bold" android:layout_marginLeft="50dp" android:layout_marginTop="20dp"/>
+                <TextView
+                    android:id="@+id/text_input_port"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="5dp"
+                    android:gravity="center_vertical"
+                    android:text="1883"
+                    android:layout_marginLeft="50dp"
+                    android:singleLine="true"
+                    android:textSize="14sp"
+                    android:textColor="@color/gray" />
+            </LinearLayout>
+            <View android:layout_height=".6dp" android:layout_width="match_parent" android:background="@color/blue"
+                android:layout_marginTop="20dp" android:layout_marginBottom="20dp"/>
+
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
+                <ImageView android:layout_height="50dp" android:layout_width="40dp" android:src="@mipmap/key"
+                    android:padding="8dp"/>
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="MQTT Authentication"
+                    android:textColor="@color/blue" android:layout_marginLeft="10dp" android:layout_gravity="center"/>
+            </LinearLayout>
+
+            <RelativeLayout android:id="@+id/enable_auth_relativeLayout" android:layout_width="match_parent" android:layout_height="wrap_content" >
+                <LinearLayout android:layout_height="wrap_content" android:layout_width="wrap_content" android:orientation="vertical"
+                    android:layout_marginLeft="50dp">
+                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Enable Authentication"
+                        android:textColor="@color/black" android:layout_gravity="center"
+                        android:textStyle="bold"/>
+                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+                        android:text="@string/enable_no_auth" android:id="@+id/auth_text"
+                        android:textColor="@color/gray" android:layout_gravity="center"/>
+                </LinearLayout>
+                <Switch  android:id="@+id/mqtt_auth_switch"  android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:layout_alignParentRight="true" android:gravity="center" android:layout_centerVertical="true" android:layout_marginRight="10dp"/>
+            </RelativeLayout>
+
+            <LinearLayout android:id="@+id/layout_username" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical">
+                <TextView android:id="@+id/username_title" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Username"
+                    android:textColor="@color/black" android:textStyle="bold" android:layout_marginLeft="50dp" android:layout_marginTop="20dp"/>
+                <TextView
+                    android:id="@+id/text_input_username"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:text="admin"
+                    android:layout_marginLeft="50dp"
+                    android:singleLine="true"
+                    android:textSize="14sp"
+                    android:layout_marginTop="5dp"
+                    android:textColor="@color/blue" />
+            </LinearLayout>
+
+            <LinearLayout android:id="@+id/layout_password" android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:orientation="vertical" android:layout_marginBottom="20dp">
+                <TextView android:id="@+id/password_title"  android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Password"
+                    android:textColor="@color/black" android:textStyle="bold" android:layout_marginLeft="50dp" android:layout_marginTop="20dp"/>
+                <TextView
+                    android:id="@+id/text_input_password"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="5dp"
+                    android:gravity="center_vertical"
+                    android:text="ismasport"
+                    android:layout_marginLeft="50dp"
+                    android:singleLine="true"
+                    android:textColor="@color/blue"
+                    android:textSize="14sp"/>
+            </LinearLayout>
+
+            <Button
+                android:id="@+id/subs"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:onClick="getSubs"
+                android:visibility="gone"
+                android:text="Get subs" />
+        </LinearLayout>
+    </ScrollView>
+</LinearLayout>
