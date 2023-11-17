@@ -30,7 +30,6 @@ public class MQTTService extends Service {
     private Thread thread;
     private MQTTBroker broker;
     private boolean status = false;
-
     private final IBinder mBinder = new LocalBinder();
 
     public class LocalBinder extends Binder {
@@ -116,7 +115,6 @@ public class MQTTService extends Service {
 
 
     private Notification mostrarNotificacion(String contenido){
-        Log.i("andysong---->>>","进入通知");
         NotificationChannel channel = new NotificationChannel(
                 CHANNEL_ID,
                 "Notificacion Broker",
@@ -131,8 +129,6 @@ public class MQTTService extends Service {
                 .setTicker("MQTT")
                 .setOnlyAlertOnce(true)
                 .setSmallIcon(R.drawable.ic_robot);
-        Log.i("andysong---->>>","ic_robot");
         return notification.build();
     }
-
 }

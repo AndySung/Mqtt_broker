@@ -2,6 +2,7 @@
     <string name="app_name">Mqtt_broker</string>
     <string name="server_service">MQTT Server</string>
     <string name="pref_broker">BrokerConfigs</string>
-    <string name="enable_no_auth">You don\'t need username or password\n for connection</string>
-    <string name="enable_auth">You need username and password to \n establish connection</string>
+    <string name="mqtt_server_content">Restart required if changes in below settings needs to be reflected</string>
+    <string name="enable_no_auth">You don\'t need username or password for connection</string>
+    <string name="enable_auth">You need username and password to establish connection</string>
 </resources>

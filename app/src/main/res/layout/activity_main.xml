@@ -12,6 +12,13 @@
             android:minHeight="?attr/actionBarSize"
             android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar">
             <!--自定义控件-->
+            <Button
+                android:id="@+id/subs"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:onClick="getSubs"
+                android:visibility="gone"
+                android:text="Get subs" />
             <TextView
                 android:id="@+id/toolbar_title"
                 android:layout_width="wrap_content"
@@ -39,16 +46,16 @@
 
             <RelativeLayout android:id="@+id/enable_mqtt_server_relativeLayout" android:layout_width="match_parent" android:layout_height="wrap_content" >
                 <LinearLayout android:layout_height="wrap_content" android:layout_width="wrap_content" android:orientation="vertical"
-                    android:layout_marginLeft="50dp">
+                    android:layout_marginLeft="50dp" android:weightSum="3">
                     <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Enable MQTT Server"
                         android:textColor="@color/black" android:layout_gravity="center"
                         android:textStyle="bold"/>
 
                     <TextView
-                        android:layout_width="match_parent"
+                        android:layout_width="280dp"
                         android:layout_height="wrap_content"
                         android:layout_gravity="center"
-                        android:text="Restart required if changes in below \n settings needs to be reflected"
+                        android:text="@string/mqtt_server_content"
                         android:textColor="@color/gray" />
                 </LinearLayout>
                 <Switch android:id="@+id/mqtt_server_switch" android:layout_width="wrap_content" android:layout_height="wrap_content"
@@ -98,7 +105,7 @@
                     <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Enable Authentication"
                         android:textColor="@color/black" android:layout_gravity="center"
                         android:textStyle="bold"/>
-                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+                    <TextView android:layout_width="280dp" android:layout_height="wrap_content"
                         android:text="@string/enable_no_auth" android:id="@+id/auth_text"
                         android:textColor="@color/gray" android:layout_gravity="center"/>
                 </LinearLayout>
@@ -138,14 +145,6 @@
                     android:textColor="@color/blue"
                     android:textSize="14sp"/>
             </LinearLayout>
-
-            <Button
-                android:id="@+id/subs"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:onClick="getSubs"
-                android:visibility="gone"
-                android:text="Get subs" />
         </LinearLayout>
     </ScrollView>
 </LinearLayout>

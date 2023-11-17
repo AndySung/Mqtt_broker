@@ -3,7 +3,6 @@ package com.soft.nice.mqtt_broker;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.app.NotificationManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -17,7 +16,6 @@ import android.text.InputFilter;
 import android.text.InputType;
 import android.util.Log;
 import android.view.View;
-import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.CompoundButton;
 import android.widget.EditText;
@@ -26,18 +24,13 @@ import android.widget.RelativeLayout;
 import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
-
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationManagerCompat;
-
 import com.soft.nice.mqtt_broker.broker.MQTTService;
 import com.soft.nice.mqtt_broker.broker.ServerInstance;
 import com.soft.nice.mqtt_broker.util.InputFilterMinMax;
 import com.soft.nice.mqtt_broker.util.Utils;
-
 import org.apache.log4j.BasicConfigurator;
-import org.apache.log4j.chainsaw.Main;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -47,13 +40,17 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.Field;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
+import java.util.Iterator;
+import java.util.Objects;
 import java.util.Properties;
 import java.util.Timer;
 import java.util.TimerTask;
-
 import io.moquette.BrokerConstants;
+import io.moquette.spi.impl.subscriptions.Subscription;
+import io.netty.handler.codec.mqtt.MqttMessage;
 
 public class MainActivity extends Activity {
     private MQTTService mService;
@@ -459,15 +456,48 @@ public class MainActivity extends Activity {
     }
 
 
+    /**
+     * getConnectionsManager: 代理的连接管理器
+     * getSubscriptions： Broker 嵌入式应用程序使用 SPI 方法来获取订阅者列表。 如果返回 null 代理未启动。
+     * internalPublish(MqttPublishMessage msg, final String clientId) : 使用代理发布消息。 它适用于嵌入应用程序。 可以用仅在使用 startServer 正确启动服务器后。
+     * **/
     public void getSubs(View v) {
+        Collection<String> clientArray = new ArrayList<>();
+        Collection<Subscription> SubArrays = new ArrayList<>();
+//        Object message = "hello,nohao";
+//        MqttMessage msg = (MqttMessage) message;
+//        msg.toString();
         try {
             Collection<String> clients = ServerInstance.getServerInstance().getConnectionsManager().getConnectedClientIds();
-
             clients.forEach(client -> {
-                Log.i("andysong---->Clients", String.valueOf(ServerInstance.getServerInstance().getConnectionsManager().isConnected(client)));
+
+                Log.i("andysong---->Client是否连接上client：", String.valueOf(ServerInstance.getServerInstance().getConnectionsManager().isConnected(client)));
+
+                Log.i("andysong---->Clients_1:",  ServerInstance.getServerInstance().getSubscriptions() +"");
+                SubArrays.addAll(ServerInstance.getServerInstance().getSubscriptions());
+
+                Log.i("andysong---->Clients_2:",  ServerInstance.getServerInstance().getConnectionsManager().getConnectedClientIds()+ "");
+                clientArray.addAll(ServerInstance.getServerInstance().getConnectionsManager().getConnectedClientIds());
+                Log.i("andysong---->Clients_3:",  client+ "");
+                Log.i("andysong---->Clients-count：",  ServerInstance.getServerInstance().getConnectionsManager().countActiveConnections()+"");
+                Log.i("andysong---->Clients-listenOnHazelCastMsg",  ServerInstance.getServerInstance().getHazelcastInstance()+"");
             });
         } catch (Exception e) {
             Log.i("andysong--Exception-->Clients", e.getLocalizedMessage());
         }
+
+        Iterator<String> it = clientArray.iterator();
+        while (it.hasNext()){
+            String s = it.next();
+            Log.i("andysong-->clientArray", s);
+        }
+
+        Iterator<Subscription> subs = SubArrays.iterator();
+        while (it.hasNext()){
+            Subscription s = subs.next();
+            Log.i("andysong-->Subscription", s.getClientId() +":"+ s.getTopicFilter() +":"+s.getRequestedQos());
+        }
+
+        //ServerInstance.getServerInstance().internalPublish((MqttPublishMessage) message, "mymqtt-4048305537417");
     }
 }
