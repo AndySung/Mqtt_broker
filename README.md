@@ -42,9 +42,10 @@
 
 ##### Quoting the code base below
 
-``` implementation 'io.moquette:moquette-netty-parser:0.9'
-    implementation 'io.moquette:moquette-broker:0.11'
-    implementation 'io.moquette:moquette-parser-commons:0.8.1'
+```
+implementation 'io.moquette:moquette-netty-parser:0.9'
+implementation 'io.moquette:moquette-broker:0.11'
+implementation 'io.moquette:moquette-parser-commons:0.8.1'
 ```
 
 
