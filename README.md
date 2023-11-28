@@ -34,3 +34,20 @@
 ## Special Note 
 
 ##### If the server and client operate on the same device, you can use the host 127.0.0.1 to connect, but the device may need to not be connected to the Internet (disconnect WiFi)
+
+
+
+
+## Sources
+
+##### Quoting the code base below
+
+``` implementation 'io.moquette:moquette-netty-parser:0.9'
+    implementation 'io.moquette:moquette-broker:0.11'
+    implementation 'io.moquette:moquette-parser-commons:0.8.1'
+```
+
+
+
+
+
