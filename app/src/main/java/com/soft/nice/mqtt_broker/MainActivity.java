@@ -3,12 +3,17 @@ package com.soft.nice.mqtt_broker;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.pm.ApplicationInfo;
+import android.net.ConnectivityManager;
+import android.net.Network;
+import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.IBinder;
@@ -64,6 +69,8 @@ public class MainActivity extends Activity {
 
     File confFile, passwordFile;
     Properties props;
+    private IntentFilter intentFilter;
+    private NetworkChangeReceiver networkChangeReceiver;
 
     protected void onStart() {
         super.onStart();
@@ -90,6 +97,8 @@ public class MainActivity extends Activity {
         context = this;
         setContentView(R.layout.activity_main);
         BasicConfigurator.configure();
+        intentFilter=new IntentFilter();
+        intentFilter.addAction("android.net.conn.CONNECTIVITY_CHANGE");  //广播接收器想要监听什么广播
         host = findViewById(R.id.text_input_host);
         port = findViewById(R.id.text_input_port);
         port.setFilters(new InputFilter[]{new InputFilterMinMax(1, 65535)});
@@ -136,14 +145,7 @@ public class MainActivity extends Activity {
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 setAuthView(isChecked);
                 if(MqttServerSwitch.isChecked() || Utils.isServiceRunning(context, "com.soft.nice.mqtt_broker.broker.MQTTService")) {
-                    stopService();
-                    Timer timer = new Timer();
-                    timer.schedule(new TimerTask() {
-                        @Override
-                        public void run() {
-                            startService();
-                        }
-                    }, 1000);
+                    restartService();
                 }
                 Toast.makeText(MainActivity.this, "MQTT broker config updated", Toast.LENGTH_SHORT).show();
             }
@@ -177,6 +179,9 @@ public class MainActivity extends Activity {
                 showEditText("Port", R.mipmap.port_icon);
             }
         });
+
+        networkChangeReceiver=new NetworkChangeReceiver();
+        registerReceiver(networkChangeReceiver,intentFilter);       //调用resigerReceiver()方法进行注册
     }
 
     private void showEditText(String strTitle, int drawableID) {
@@ -290,13 +295,24 @@ public class MainActivity extends Activity {
         }
     }
 
+    private void restartService() {
+        stopService();
+        Timer timer = new Timer();
+        timer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                startService();
+            }
+        }, 1000);
+    }
+
     //配置信息
     private Properties defaultConfig() {
         //Properties props = new Properties();
         props.setProperty(BrokerConstants.PERSISTENT_STORE_PROPERTY_NAME, context.getExternalFilesDir(null).getAbsolutePath() + File.separator + BrokerConstants.DEFAULT_MOQUETTE_STORE_MAP_DB_FILENAME);
         props.setProperty(BrokerConstants.PORT_PROPERTY_NAME, "1883");
         props.setProperty(BrokerConstants.NEED_CLIENT_AUTH, "false");
-        props.setProperty(BrokerConstants.HOST_PROPERTY_NAME, Utils.getBrokerURL(this));
+        props.setProperty(BrokerConstants.HOST_PROPERTY_NAME, BrokerConstants.HOST);    //这里直接设置成 0.0.0.0
         props.setProperty(BrokerConstants.WEB_SOCKET_PORT_PROPERTY_NAME, String.valueOf(BrokerConstants.WEBSOCKET_PORT));
         return props;
     }
@@ -323,7 +339,7 @@ public class MainActivity extends Activity {
         //  Properties props = new Properties();
         props.setProperty(BrokerConstants.PERSISTENT_STORE_PROPERTY_NAME, context.getExternalFilesDir(null).getAbsolutePath() + File.separator + BrokerConstants.DEFAULT_MOQUETTE_STORE_MAP_DB_FILENAME);
         props.setProperty(BrokerConstants.PORT_PROPERTY_NAME, vPort);
-        props.setProperty(BrokerConstants.HOST_PROPERTY_NAME, Utils.getBrokerURL(this));
+        props.setProperty(BrokerConstants.HOST_PROPERTY_NAME, BrokerConstants.HOST); //这里直接设置成 0.0.0.0
         props.setProperty(BrokerConstants.WEB_SOCKET_PORT_PROPERTY_NAME, String.valueOf(BrokerConstants.WEBSOCKET_PORT));
         props.setProperty(BrokerConstants.NEED_CLIENT_AUTH, String.valueOf(vAuth));
         if (vAuth) {
@@ -405,6 +421,7 @@ public class MainActivity extends Activity {
         } catch (Exception e) {
             e.printStackTrace();
         }
+        unregisterReceiver(networkChangeReceiver);
     }
 
     @Override
@@ -456,6 +473,20 @@ public class MainActivity extends Activity {
     }
 
 
+    class NetworkChangeReceiver extends BroadcastReceiver {
+        @Override
+        public void onReceive(Context context, Intent intent){
+            ConnectivityManager connectionManager=(ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);  //得到系统服务类
+            NetworkInfo networkInfo=connectionManager.getActiveNetworkInfo();
+            if(networkInfo!=null && networkInfo.isAvailable()){
+                host.setText(Utils.getBrokerURL(MainActivity.this));
+            }else{
+                host.setText(BrokerConstants.HOST);
+            }
+        }
+    }
+
+
     /**
      * getConnectionsManager: 代理的连接管理器
      * getSubscriptions： Broker 嵌入式应用程序使用 SPI 方法来获取订阅者列表。 如果返回 null 代理未启动。
@@ -464,26 +495,14 @@ public class MainActivity extends Activity {
     public void getSubs(View v) {
         Collection<String> clientArray = new ArrayList<>();
         Collection<Subscription> SubArrays = new ArrayList<>();
-//        Object message = "hello,nohao";
-//        MqttMessage msg = (MqttMessage) message;
-//        msg.toString();
         try {
             Collection<String> clients = ServerInstance.getServerInstance().getConnectionsManager().getConnectedClientIds();
             clients.forEach(client -> {
-
-                Log.i("andysong---->Client是否连接上client：", String.valueOf(ServerInstance.getServerInstance().getConnectionsManager().isConnected(client)));
-
-                Log.i("andysong---->Clients_1:",  ServerInstance.getServerInstance().getSubscriptions() +"");
                 SubArrays.addAll(ServerInstance.getServerInstance().getSubscriptions());
-
-                Log.i("andysong---->Clients_2:",  ServerInstance.getServerInstance().getConnectionsManager().getConnectedClientIds()+ "");
                 clientArray.addAll(ServerInstance.getServerInstance().getConnectionsManager().getConnectedClientIds());
-                Log.i("andysong---->Clients_3:",  client+ "");
-                Log.i("andysong---->Clients-count：",  ServerInstance.getServerInstance().getConnectionsManager().countActiveConnections()+"");
-                Log.i("andysong---->Clients-listenOnHazelCastMsg",  ServerInstance.getServerInstance().getHazelcastInstance()+"");
             });
         } catch (Exception e) {
-            Log.i("andysong--Exception-->Clients", e.getLocalizedMessage());
+            e.printStackTrace();
         }
 
         Iterator<String> it = clientArray.iterator();
@@ -497,7 +516,5 @@ public class MainActivity extends Activity {
             Subscription s = subs.next();
             Log.i("andysong-->Subscription", s.getClientId() +":"+ s.getTopicFilter() +":"+s.getRequestedQos());
         }
-
-        //ServerInstance.getServerInstance().internalPublish((MqttPublishMessage) message, "mymqtt-4048305537417");
     }
 }

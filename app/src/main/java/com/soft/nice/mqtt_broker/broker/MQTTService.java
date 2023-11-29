@@ -32,6 +32,8 @@ public class MQTTService extends Service {
     private boolean status = false;
     private final IBinder mBinder = new LocalBinder();
 
+    PendingIntent pendingIntent;
+
     public class LocalBinder extends Binder {
         public MQTTService getService() {
             return MQTTService.this;
@@ -53,14 +55,16 @@ public class MQTTService extends Service {
         Map<String, String> map = (HashMap) intent.getSerializableExtra("config");
         Properties config = new Properties();
         config.putAll(map);
-        Intent notificationIntent = new Intent(this, MainActivity.class);
+        Intent notificationIntent = getBaseContext().getPackageManager()
+                .getLaunchIntentForPackage(getPackageName());
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
         int flag = 0;
         if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             flag = PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE;
         }else{
             flag = PendingIntent.FLAG_UPDATE_CURRENT;
         }
-        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, flag);
+        pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, flag);
 
         try {
             broker = new MQTTBroker(config);
@@ -75,7 +79,7 @@ public class MQTTService extends Service {
                     Toast.makeText(this, "MQTT Broker Service started", Toast.LENGTH_LONG).show();
                 }
             }
-            startForeground(1, mostrarNotificacion(""));
+            startForeground(1, StartNotification("MQTT Service running..."));
 //            Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)
 //                    .setContentTitle("Server MQTT running...")
 //                    .setOngoing(true)
@@ -114,21 +118,22 @@ public class MQTTService extends Service {
     }
 
 
-    private Notification mostrarNotificacion(String contenido){
+    private Notification StartNotification(String ContentId){
         NotificationChannel channel = new NotificationChannel(
                 CHANNEL_ID,
-                "Notificacion Broker",
+                "Notification Broker",
                 NotificationManager.IMPORTANCE_DEFAULT
         );
         NotificationManager notificationManager=getSystemService(NotificationManager.class);
         notificationManager.createNotificationChannel(channel);
         Notification.Builder notification = new Notification.Builder(this, CHANNEL_ID)
-                .setContentText(contenido)
-                .setContentTitle("Server MQTT running...")
+                .setContentText(ContentId)
+                .setContentTitle("MQTT Service")
                 .setOngoing(true)
                 .setTicker("MQTT")
                 .setOnlyAlertOnce(true)
                 .setSmallIcon(R.drawable.ic_robot);
+        notification.setContentIntent(pendingIntent);
         return notification.build();
     }
 }
