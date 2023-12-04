@@ -32,7 +32,7 @@ public class MQTTBroker implements Callable<Boolean> {
             // use ServerInstance singleton to get the same instance of server
             server = ServerInstance.getServerInstance();
             server.startServer(config);
-            Log.d(TAG, "MQTT Broker Started");
+            Log.d(TAG, "MQTT Broker Started" + config.toString());
             return true;
         } catch (Exception e) {
             Log.e(TAG, e.getMessage());

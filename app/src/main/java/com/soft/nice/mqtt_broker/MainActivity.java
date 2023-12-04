@@ -12,7 +12,6 @@ import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.pm.ApplicationInfo;
 import android.net.ConnectivityManager;
-import android.net.Network;
 import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Bundle;
@@ -49,13 +48,11 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Iterator;
-import java.util.Objects;
 import java.util.Properties;
 import java.util.Timer;
 import java.util.TimerTask;
 import io.moquette.BrokerConstants;
 import io.moquette.spi.impl.subscriptions.Subscription;
-import io.netty.handler.codec.mqtt.MqttMessage;
 
 public class MainActivity extends Activity {
     private MQTTService mService;
@@ -67,7 +64,7 @@ public class MainActivity extends Activity {
     LinearLayout layout_username, layout_password, layout_port;
     RelativeLayout enable_mqtt_server_relativeLayout, enable_auth_relativeLayout;
 
-    File confFile, passwordFile;
+    File confFile, passwordFile, aclFile, mqttFile;
     Properties props;
     private IntentFilter intentFilter;
     private NetworkChangeReceiver networkChangeReceiver;
@@ -81,7 +78,7 @@ public class MainActivity extends Activity {
         public void onServiceConnected(ComponentName className, IBinder service) {
             MainActivity.this.mService = ((MQTTService.LocalBinder) service).getService();
             MainActivity.this.mBound = ((MQTTService.LocalBinder) service).getServerStatus();
-            // MainActivity.this.updateStartedStatus();
+//             MainActivity.this.updateStartedStatus();
         }
 
         public void onServiceDisconnected(ComponentName arg0) {
@@ -94,11 +91,25 @@ public class MainActivity extends Activity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         getWindow().setStatusBarColor(getColor(R.color.blue));
-        context = this;
         setContentView(R.layout.activity_main);
+        context = this;
         BasicConfigurator.configure();
         intentFilter=new IntentFilter();
         intentFilter.addAction("android.net.conn.CONNECTIVITY_CHANGE");  //广播接收器想要监听什么广播
+        initView();
+        // 配置文件
+        confFile = new File(getApplicationContext().getDir("media", 0).getAbsolutePath() +"/"+ Utils.BROKER_CONFIG_FILE);
+        passwordFile = new File(getApplicationContext().getDir("media", 0).getAbsolutePath() +"/"+ Utils.PASSWORD_FILE);
+        aclFile = new File(getApplicationContext().getDir("media",0).getAbsolutePath() + "/"+Utils.ACL_FILE);
+        mqttFile = new File(getApplicationContext().getDir("media",0).getAbsolutePath()+"/"+Utils.MQTT_FILE);
+        Log.i("andysong---MAIN", confFile.getAbsolutePath());
+        loadConfig();
+        MqttAuthSwitch.setChecked(true);
+        startService();
+        initData();
+    }
+
+    private void initView() {
         host = findViewById(R.id.text_input_host);
         port = findViewById(R.id.text_input_port);
         port.setFilters(new InputFilter[]{new InputFilterMinMax(1, 65535)});
@@ -115,22 +126,21 @@ public class MainActivity extends Activity {
         enable_mqtt_server_relativeLayout = findViewById(R.id.enable_mqtt_server_relativeLayout);
         enable_auth_relativeLayout = findViewById(R.id.enable_auth_relativeLayout);
         props = new Properties();
-        MqttAuthSwitch.setChecked(false);
-        confFile = new File(getApplicationContext().getDir("media", 0).getAbsolutePath() + Utils.BROKER_CONFIG_FILE);
-        passwordFile = new File(getApplicationContext().getDir("media", 0).getAbsolutePath() + Utils.PASSWORD_FILE);
-        Log.i("andysong---MAIN", confFile.getAbsolutePath());
-        loadConfig();
+        MqttAuthSwitch.setChecked(true);
 
-        if(mBound && ServerInstance.getServerInstance() == null){
-            startService();
+        // 判断服务是否连接
+        if(Utils.isServiceRunning(context, "com.soft.nice.mqtt_broker.broker.MQTTService")){
+            MqttServerSwitch.setChecked(true);
+        }else{
+            MqttServerSwitch.setChecked(false);
         }
-        Log.i("MAIN", "JAVA : " + String.valueOf(Utils.getVersion()));
+    }
 
+    private void initData() {
         MqttServerSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 if(isChecked) {//选中
-                    saveAndGetConfig();
                     startService();
                     MqttServerSwitch.setChecked(true);
                 }else {
@@ -150,11 +160,6 @@ public class MainActivity extends Activity {
                 Toast.makeText(MainActivity.this, "MQTT broker config updated", Toast.LENGTH_SHORT).show();
             }
         });
-        if(Utils.isServiceRunning(context, "com.soft.nice.mqtt_broker.broker.MQTTService")){
-            MqttServerSwitch.setChecked(true);
-        }else{
-            MqttServerSwitch.setChecked(false);
-        }
 
         //username Layout点击事件
         layout_username.setOnClickListener(new View.OnClickListener() {
@@ -179,7 +184,7 @@ public class MainActivity extends Activity {
                 showEditText("Port", R.mipmap.port_icon);
             }
         });
-
+        //监听网络广播，判断网络是否连接
         networkChangeReceiver=new NetworkChangeReceiver();
         registerReceiver(networkChangeReceiver,intentFilter);       //调用resigerReceiver()方法进行注册
     }
@@ -310,19 +315,57 @@ public class MainActivity extends Activity {
     private Properties defaultConfig() {
         //Properties props = new Properties();
         props.setProperty(BrokerConstants.PERSISTENT_STORE_PROPERTY_NAME, context.getExternalFilesDir(null).getAbsolutePath() + File.separator + BrokerConstants.DEFAULT_MOQUETTE_STORE_MAP_DB_FILENAME);
-        props.setProperty(BrokerConstants.PORT_PROPERTY_NAME, "1883");
+        props.put(BrokerConstants.PORT_PROPERTY_NAME, "1883");
         props.setProperty(BrokerConstants.NEED_CLIENT_AUTH, "false");
         props.setProperty(BrokerConstants.HOST_PROPERTY_NAME, BrokerConstants.HOST);    //这里直接设置成 0.0.0.0
         props.setProperty(BrokerConstants.WEB_SOCKET_PORT_PROPERTY_NAME, String.valueOf(BrokerConstants.WEBSOCKET_PORT));
+        writeToAclFile(aclFile);
+        props.setProperty(BrokerConstants.ACL_FILE_PROPERTY_NAME, aclFile.getAbsolutePath());
         return props;
     }
 
-    //填写密码文件
+
+    //填写ACL文件（测试数据）【Test ACL file availability】
+    private void writeToAclFile(File aclFile) {
+        try (FileOutputStream fileOutputStream = new FileOutputStream(aclFile)) {
+            fileOutputStream.write("# This affects access control for clients with no username.\n".getBytes());
+            fileOutputStream.write("topic write SYS/test\n".getBytes());
+            fileOutputStream.write("topic read SYS/test\n".getBytes());
+            fileOutputStream.write("# This only affects clients with username \"admin\".\n".getBytes());
+            fileOutputStream.write("user admin\n".getBytes());
+            fileOutputStream.write("topic beijing\n".getBytes());
+            fileOutputStream.write("# This only affects clients with username \"admin123\".\n".getBytes());
+            fileOutputStream.write("user admin123\n".getBytes());
+            fileOutputStream.write("topic nanjing\n".getBytes());
+            fileOutputStream.write("# This only affects clients with username \"admin345\".\n".getBytes());
+            fileOutputStream.write("user admin345\n".getBytes());
+            fileOutputStream.write("topic shanghai\n".getBytes());
+            return;
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        Toast.makeText(this, "Unable to save password", Toast.LENGTH_SHORT).show();
+    }
+
+    //填写密码文件（测试数据）【Test password file availability】
     private void writeToPasswordFile(File passwordFile) {
         try (FileOutputStream fileOutputStream = new FileOutputStream(passwordFile)) {
             fileOutputStream.write(username.getText().toString().getBytes());
             fileOutputStream.write(":".getBytes());
             fileOutputStream.write(Utils.getSHA(password.getText().toString()).getBytes());
+            fileOutputStream.write("\n".getBytes());
+
+            fileOutputStream.write("admin123".getBytes());
+            fileOutputStream.write(":".getBytes());
+            fileOutputStream.write(Utils.getSHA(password.getText().toString()).getBytes());
+            fileOutputStream.write("\n".getBytes());
+
+            fileOutputStream.write("admin345".getBytes());
+            fileOutputStream.write(":".getBytes());
+            fileOutputStream.write(Utils.getSHA(password.getText().toString()).getBytes());
+            fileOutputStream.write("\n".getBytes());
+
+
             return;
         } catch (NoSuchAlgorithmException e) {
             e.printStackTrace();
@@ -339,7 +382,7 @@ public class MainActivity extends Activity {
         //  Properties props = new Properties();
         props.setProperty(BrokerConstants.PERSISTENT_STORE_PROPERTY_NAME, context.getExternalFilesDir(null).getAbsolutePath() + File.separator + BrokerConstants.DEFAULT_MOQUETTE_STORE_MAP_DB_FILENAME);
         props.setProperty(BrokerConstants.PORT_PROPERTY_NAME, vPort);
-        props.setProperty(BrokerConstants.HOST_PROPERTY_NAME, BrokerConstants.HOST); //这里直接设置成 0.0.0.0
+        props.setProperty(BrokerConstants.HOST_PROPERTY_NAME, Utils.getBrokerURL(MainActivity.this)); //这里直接设置成 0.0.0.0
         props.setProperty(BrokerConstants.WEB_SOCKET_PORT_PROPERTY_NAME, String.valueOf(BrokerConstants.WEBSOCKET_PORT));
         props.setProperty(BrokerConstants.NEED_CLIENT_AUTH, String.valueOf(vAuth));
         if (vAuth) {
@@ -378,20 +421,18 @@ public class MainActivity extends Activity {
     }
 
     private void updateUI(Properties props) {
-       // username.setText("");
-       // password.setText("");
         port.setText(props.getProperty(BrokerConstants.PORT_PROPERTY_NAME));
         host.setText(props.getProperty(BrokerConstants.HOST_PROPERTY_NAME));
         props.setProperty(BrokerConstants.WEB_SOCKET_PORT_PROPERTY_NAME, String.valueOf(BrokerConstants.WEBSOCKET_PORT));
         if (props.getProperty(BrokerConstants.NEED_CLIENT_AUTH) != null && Boolean.valueOf(props.getProperty(BrokerConstants.NEED_CLIENT_AUTH))) {
-//            auth.setChecked(true);
-//            authFields.setVisibility(View.VISIBLE);
+            MqttAuthSwitch.setChecked(true);
         } else {
-//            noAuth.setChecked(true);
+            MqttAuthSwitch.setChecked(false);
         }
     }
 
     public void startService() {
+        saveAndGetConfig();     //启动服务前先保存下配置文件
         if(!Utils.isServiceRunning(context, "com.soft.nice.mqtt_broker.broker.MQTTService")) {
             if (mBound == true && mService != null) {
                 Log.i("MainActivity", "Service already running");
@@ -498,23 +539,34 @@ public class MainActivity extends Activity {
         try {
             Collection<String> clients = ServerInstance.getServerInstance().getConnectionsManager().getConnectedClientIds();
             clients.forEach(client -> {
+                Log.i("andysong---->Client是否连接上client：", String.valueOf(ServerInstance.getServerInstance().getConnectionsManager().isConnected(client)));
+
+                Log.i("andysong---->Clients_1:",  ServerInstance.getServerInstance().getSubscriptions() +"");
                 SubArrays.addAll(ServerInstance.getServerInstance().getSubscriptions());
+                Log.i("andysong---->Clients_2:",  ServerInstance.getServerInstance().getConnectionsManager().getConnectedClientIds().toString()+ "");
                 clientArray.addAll(ServerInstance.getServerInstance().getConnectionsManager().getConnectedClientIds());
+                Log.i("andysong---->Clients_3:",  client+ "");
+                Log.i("andysong---->Clients-count：",  ServerInstance.getServerInstance().getConnectionsManager().countActiveConnections()+"");
+                Log.i("andysong---->Clients-listenOnHazelCastMsg",  ServerInstance.getServerInstance().getHazelcastInstance()+"");
+                Log.i("andysong---->andy：",  ServerInstance.getServerInstance().getSubscriptions().size()+"");
             });
         } catch (Exception e) {
             e.printStackTrace();
         }
 
         Iterator<String> it = clientArray.iterator();
+        Log.i("andysong-->clientArray--it：", String.valueOf(it));
         while (it.hasNext()){
             String s = it.next();
             Log.i("andysong-->clientArray", s);
         }
 
         Iterator<Subscription> subs = SubArrays.iterator();
-        while (it.hasNext()){
+        Log.i("andysong-->clientArray--subs：", String.valueOf(subs.hasNext()));
+        while (subs.hasNext()){
             Subscription s = subs.next();
             Log.i("andysong-->Subscription", s.getClientId() +":"+ s.getTopicFilter() +":"+s.getRequestedQos());
         }
+
     }
 }

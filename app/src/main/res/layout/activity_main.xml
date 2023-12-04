@@ -139,7 +139,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="5dp"
                     android:gravity="center_vertical"
-                    android:text="ismasport"
+                    android:text="admin"
                     android:layout_marginLeft="50dp"
                     android:singleLine="true"
                     android:textColor="@color/blue"

@@ -21,6 +21,8 @@ import java.util.List;
 public class Utils {
     public static final String PASSWORD_FILE = "pwd.conf";
     public static final String BROKER_CONFIG_FILE = "mqtt.properties";
+    public static final String ACL_FILE = "acl_file.conf";
+    public static final String MQTT_FILE = "mqtt_file.conf";
 
     public static void isPortOpen(int port) {
         SocketCheckTask task = new SocketCheckTask();
